@@ -1,0 +1,8 @@
+Latest Version: langchain-core==0.3.0.dev1 (langchain-core==0.3.0.dev1)
+Published At: 2024-09-04T23:19:29Z
+
+Release Notes:
+Changes since langchain-core==0.2.38
+
+fmt
+fmt

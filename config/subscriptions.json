@@ -1,6 +1,5 @@
 {
     "repositories": [
-        "octocat/Hello-World",
-        "octocat/Spoon-Knife"
+        "langchain-ai/langchain"
     ]
 }
