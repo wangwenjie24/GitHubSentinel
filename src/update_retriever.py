@@ -1,6 +1,8 @@
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+
+
 class UpdateRetriever:
     def __init__(self, token=None):
         self.base_url = "https://api.github.com"
@@ -30,24 +32,34 @@ class UpdateRetriever:
             print(f"Failed to fetch issues for {repo}: {response.status_code}")
             return []
 
-    def fetch_issues(self, repo):
+    def fetch_issues(self, repo, since=None, until=None):
         """
         获取指定仓库的 issues 列表。
         """
         url = f"{self.base_url}/repos/{repo}/issues"
-        response = requests.get(url, headers=self.headers)
+        params = {
+            "since": since,
+            "until": until,
+            "state": "closed"
+        }
+        response = requests.get(url, headers=self.headers, params=params)
         if response.status_code == 200:
             return response.json()
         else:
             print(f"Failed to fetch issues for {repo}: {response.status_code}")
             return []
 
-    def fetch_pull_requests(self, repo):
+    def fetch_pull_requests(self, repo, since=None, until=None):
         """
         获取指定仓库的 pull requests 列表。
         """
         url = f"{self.base_url}/repos/{repo}/pulls"
-        response = requests.get(url, headers=self.headers)
+        params = {
+            "since": since,
+            "until": until,
+            "state": "closed"
+        }
+        response = requests.get(url, headers=self.headers, params=params)
         if response.status_code == 200:
             return response.json()
         else:
@@ -80,3 +92,35 @@ class UpdateRetriever:
                 f.write("No open pull requests.\n")
 
         print(f"Daily report exported: {file_name}")
+
+        def export_daily_report_by_date_range(self, repo, days):
+            """
+            导出时间范围内进展报告（issues 和 pull requests）到 Markdown 文件。
+            """
+            today = datetime.today()
+            since = today - timedelta(days=days)
+
+            updates = self.fetch_updates(repo, since=since.isoformat(), until=today.isoformat())
+            repo_dir = os.path.join("daily_progress", repo.replace('/', '_'))
+            os.makedirs(repo_dir, exist_ok=True)
+
+            # 创建 Markdown 文件
+            date_str = f"{since}_to_{today}"
+            file_name = os.path.join(repo_dir, f"{date_str}.md")
+
+            with open(file_name, 'w', encoding='utf-8') as f:
+                f.write(f"# {repo} Daily Report - {date_str}\n\n")
+                f.write("## Issues\n")
+                if issues:
+                    for issue in issues:
+                        f.write(f"- {issue['title']} (#{issue['number']})\n")
+                else:
+                    f.write("No open issues.\n")
+                f.write("\n## Pull Requests\n")
+                if pull_requests:
+                    for pr in pull_requests:
+                        f.write(f"- {pr['title']} (#{pr['number']})\n")
+                else:
+                    f.write("No open pull requests.\n")
+
+            print(f"Daily report exported: {file_name}")
