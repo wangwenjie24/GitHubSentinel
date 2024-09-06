@@ -3,7 +3,11 @@ import time
 from datetime import datetime
 
 class Scheduler:
-    def __init__(self):
+    def __init__(self, update_retriever, notifier, report_generator, subscription_manager):
+        self.update_retriever = update_retriever
+        self.notifier = notifier
+        self.report_generator = report_generator
+        self.subscription_manager = subscription_manager
         self.jobs = []
 
     def schedule_task(self, task, interval_type, interval_value):
@@ -24,6 +28,13 @@ class Scheduler:
 
         self.jobs.append(job)
         print(f"Scheduled task: {task.__name__} ({interval_type} - {interval_value})")
+
+    def fetch_and_generate_report(self):
+        subscriptions = self.subscription_manager.get_repositories()
+        for repo in subscriptions:
+            updates = self.update_retriever.fetch_updates(repo)
+            markdown_file_path = self.report_generator.generate_daily_report(repo, updates)
+            self.report_generator.generate_formal_report(markdown_file_path)
 
     def run(self):
         """

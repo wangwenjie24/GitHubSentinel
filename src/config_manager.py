@@ -7,7 +7,6 @@ class ConfigManager:
             self.config = json.load(file)
 
     def get_github_token(self):
-        print(os.getenv('GITHUB_TOKEN', self.config.get('github_token')))
         # 优先从环境变量获取 GitHub Token
         return os.getenv('GITHUB_TOKEN', self.config.get('github_token'))
 

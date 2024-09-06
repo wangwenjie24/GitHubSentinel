@@ -1,5 +1,5 @@
 {
     "repositories": [
-        "langchain-ai/langchain"
+        "tensorflow/tensorflow"
     ]
 }
