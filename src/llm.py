@@ -4,7 +4,11 @@ from langchain_core.output_parsers import StrOutputParser
 
 class LLM:
     def __init__(self):
+        # 创建OpenAI实例
         self.llm = ChatOpenAI(model="gpt-4o-mini")
+        # 从文件中读取系统提示词
+        with open("../prompts/report_prompt.txt", "r", encoding="utf-8") as f:
+            self.system_prompt = f.read()
 
     def summarize_issues_and_prs(self, markdown_content, dry_run=False):
         """
@@ -12,8 +16,8 @@ class LLM:
         """
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", "你是一个负责项目报告生成的助手。"),
-                ("user", "以下是项目的最新进展，根据功能合并同类项，形成一份简报，至少包含：1）新增功能；2）主要改进；3）修复问题；:\n\n{markdown_content}"),
+                ("system", self.system_prompt),
+                ("user", "{markdown_content}"),
             ]
         )
 
@@ -21,6 +25,6 @@ class LLM:
             print(markdown_content)
             return "dry run"
 
+        # 调用模型生成内容
         chain = prompt | self.llm | StrOutputParser()
-        result = chain.invoke({"markdown_content": markdown_content})
-        return result
+        return chain.invoke({"markdown_content": markdown_content})
