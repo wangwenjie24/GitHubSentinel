@@ -1,8 +1,9 @@
 import json
 
+
 class SubscriptionManager:
 
-    def __init__(self, subscription_file='../config/subscriptions.json'):
+    def __init__(self, subscription_file='../subscriptions.json'):
         self.subscription_file = subscription_file
         self.subscriptions = self._load_subscriptions()
 
@@ -36,9 +37,6 @@ class SubscriptionManager:
         if repo not in self.subscriptions:
             self.subscriptions.append(repo)
             self._save_subscriptions()
-            print(f"Successfully added {repo} to subscriptions.")
-        else:
-            print(f"{repo} is already in the subscription list.")
 
     def remove_repository(self, repo):
         """
@@ -47,6 +45,3 @@ class SubscriptionManager:
         if repo in self.subscriptions:
             self.subscriptions.remove(repo)
             self._save_subscriptions()
-            print(f"Successfully removed {repo} from subscriptions.")
-        else:
-            print(f"{repo} is not in the subscription list.")

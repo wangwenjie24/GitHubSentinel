@@ -4,7 +4,7 @@
         "email": "example@example.com"
     },
     "scheduler_settings": {
-        "interval_type": "every",
-        "interval_value": 1
+        "frequency_days": 1,
+        "execution_time": "08:00"
     }
 }

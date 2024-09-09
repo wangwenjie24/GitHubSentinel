@@ -2,9 +2,8 @@ import threading
 import time
 from config_manager import ConfigManager
 from subscription_manager import SubscriptionManager
-from update_retriever import UpdateRetriever
+from github_client import GithubClient
 from report_generator import ReportGenerator
-from scheduler import Scheduler
 from command_handler import CommandHandler
 from notifier import Notifier
 from llm import LLM
@@ -13,7 +12,7 @@ def main():
     llm = LLM()
     config_manager = ConfigManager()
     subscription_manager = SubscriptionManager()
-    update_retriever = UpdateRetriever(config_manager.get_github_token())
+    update_retriever = GithubClient(config_manager.get_github_token())
     notifier = Notifier()
     report_generator = ReportGenerator(llm)
 

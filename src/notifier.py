@@ -1,6 +1,8 @@
 import json
+
+
 class Notifier:
-    def __init__(self, config_file='../config/config.json'):
+    def __init__(self, config_file='../config.json'):
         with open(config_file, 'r') as file:
             self.config = json.load(file)
 

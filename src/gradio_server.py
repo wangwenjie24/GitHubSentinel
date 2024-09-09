@@ -5,19 +5,21 @@ from subscription_manager import SubscriptionManager
 from report_generator import ReportGenerator
 from notifier import Notifier
 from llm import LLM
-from update_retriever import UpdateRetriever
+from github_client import GithubClient
 
 llm = LLM()
 config_manager = ConfigManager()
 subscription_manager = SubscriptionManager()
 notifier = Notifier()
-updateRetriever = UpdateRetriever()
+updateRetriever = GithubClient()
 report_generator = ReportGenerator(llm)
 
+
 def generate_report_by_date_range(repo, days):
-    markdown_file_path = report_generator.export_content_by_date_range(repo, days, updateRetriever)
+    markdown_file_path = updateRetriever.export_progress_by_date_range(repo, days)
     report, report_file_path = report_generator.generate_report_by_date_range(markdown_file_path, days)
     return report, report_file_path
+
 
 # 创建Gradio界面
 demo = gr.Interface(

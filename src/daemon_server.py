@@ -1,41 +1,70 @@
-import threading
+import schedule
+import time
+import sys
+import signal
 from config_manager import ConfigManager
 from subscription_manager import SubscriptionManager
-from update_retriever import UpdateRetriever
+from github_client import GithubClient
 from report_generator import ReportGenerator
-from scheduler import Scheduler
 from notifier import Notifier
 from llm import LLM
+from logger import LOG
 
-llm = LLM()
-config_manager = ConfigManager()
-subscription_manager = SubscriptionManager()
-update_retriever = UpdateRetriever(config_manager.get_github_token())
-notifier = Notifier()
-report_generator = ReportGenerator(llm)
 
-def run_scheduler(scheduler, interval_type, interval_value):
-    # 让调度器在后台运行
-    scheduler.schedule_task(scheduler.fetch_and_generate_report, interval_type, interval_value)
-    scheduler.run()
+def graceful_shutdown(signum, frame):
+    """
+    优雅关闭程序的函数，处理信号时调用
+    """
+    LOG.info("[优雅退出]守护进程接收到终止信号")
+    sys.exit(0)  # 安全退出程序
 
-def fetch_and_generate_report(self):
+
+def github_job(subscription_manager, update_retriever, report_generator, notifier, days):
+    """
+    定时任务。
+    """
+    LOG.info("[开始执行定时任务]")
     subscriptions = subscription_manager.get_repositories()
+    LOG.info(f"订阅列表：{subscriptions}")
     for repo in subscriptions:
-        updates = update_retriever.fetch_updates(repo)
-        markdown_file_path = report_generator.export_daily_content(repo, updates)
-        report_generator.generate_daily_report(markdown_file_path)
+        markdown_file_path = update_retriever.export_progress_by_date_range(repo, days)
+        report_generator.generate_report_by_date_range(markdown_file_path, days)
+    LOG.info(f"[定时任务执行完毕]")
+
 
 def main():
+    # 设置信号处理器
+    signal.signal(signal.SIGTERM, graceful_shutdown)
+
+    llm = LLM()
+    config_manager = ConfigManager()
+    subscription_manager = SubscriptionManager()
+    update_retriever = GithubClient(config_manager.get_github_token())
+    notifier = Notifier()
+    report_generator = ReportGenerator(llm)
+
     # 从配置文件读取调度设置
     scheduler_settings = config_manager.get_scheduler_settings()
-    interval_type = scheduler_settings.get('interval_type', 'daily')
-    interval_value = scheduler_settings.get('interval_value', 1)
+    frequency_days = scheduler_settings.get('frequency_days', '1')
+    execution_time = scheduler_settings.get('execution_time', "08:00")
 
-    # 创建调度器线程，让它在后台运行
-    scheduler_thread = threading.Thread(target=run_scheduler, args=(Scheduler(), interval_type, interval_value))
-    scheduler_thread.daemon = True  # 设置为守护线程，主线程退出后自动关闭
-    scheduler_thread.start()
+    github_job(subscription_manager, update_retriever, report_generator, notifier, frequency_days)
+
+    schedule.every(frequency_days).days.at(
+        execution_time
+    ).do(github_job, subscription_manager, update_retriever, report_generator, notifier, frequency_days)
+
+    """
+    启动调度器，执行所有调度任务。
+    """
+    try:
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except Exception as e:
+        LOG.error(f"主进程发生异常：{str(e)}")
+        sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
